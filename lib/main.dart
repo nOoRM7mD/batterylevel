@@ -27,24 +27,40 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+  static const String _channel = 'samples.flutter.dev/battery';
+  String _batteryLevel;
 
-  static const platform = const MethodChannel('samples.flutter.dev/battery');
+  String _result = 'Unknown battery level.';
 
-  // Get battery level.
-  String _batteryLevel = 'Unknown battery level.';
+  //static const platform = const MethodChannel('samples.flutter.dev/battery');
+  static const BasicMessageChannel<String> platform =
+      BasicMessageChannel<String>(_channel, StringCodec());
 
-  Future<void> _getBatteryLevel() async {
+  @override
+  void initState() {
+    super.initState();
+    platform.setMessageHandler(_getBatteryLevel);
+  }
+
+  /// this function helps to manage the message received under MessageChannel.
+  // ignore: missing_return
+  Future<String> _getBatteryLevel(String message) async {
     String batteryLevel;
+
     try {
-      final int result = await platform.invokeMethod('getBatteryLevel');
-      batteryLevel = 'Battery level at $result % .';
+      // final int result = await platform.invokeMethod('getBatteryLevel');
+      batteryLevel = 'Battery level at $message % .';
     } on PlatformException catch (e) {
       batteryLevel = "Failed to get battery level: '${e.message}'.";
     }
-
     setState(() {
       _batteryLevel = batteryLevel;
+    });
+  }
+
+  void onGetBatteryBtnClicked() {
+    setState(() {
+      _result = _batteryLevel;
     });
   }
 
@@ -57,13 +73,12 @@ class _MyHomePageState extends State<MyHomePage> {
           children: [
             ElevatedButton(
               child: Text('Get Battery Level'),
-              onPressed: _getBatteryLevel,
+              onPressed: onGetBatteryBtnClicked,
             ),
-            Text(_batteryLevel),
+            Text(_result),
           ],
         ),
       ),
     );
   }
-
 }
